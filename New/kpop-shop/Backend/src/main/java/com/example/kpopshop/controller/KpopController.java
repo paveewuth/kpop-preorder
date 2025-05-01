@@ -1,6 +1,8 @@
-package main.java.com.example.kpopshop.controller;
+package com.example.kpopshop.controller;
 
 import com.example.kpopshop.model.Product;
+import com.example.kpopshop.model.User;
+import com.example.kpopshop.model.Order;
 import com.example.kpopshop.service.KpopService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;

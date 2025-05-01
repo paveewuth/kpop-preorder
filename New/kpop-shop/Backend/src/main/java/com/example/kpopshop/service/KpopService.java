@@ -1,6 +1,9 @@
-package main.java.com.example.kpopshop.service;
+package com.example.kpopshop.service;
 
-import com.example.kpopshop.model.*;
+
+import com.example.kpopshop.model.Product;
+import com.example.kpopshop.model.Order;
+import com.example.kpopshop.model.User;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
