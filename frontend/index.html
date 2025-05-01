@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>K-pop Preorder</title>
+</head>
+<body>
+  <h1>K-pop Preorder System</h1>
+
+  <h2>สมัครสมาชิก</h2>
+  <form id="registerForm">
+    <input type="text" id="name" placeholder="ชื่อ" required><br>
+    <input type="email" id="email" placeholder="อีเมล" required><br>
+    <input type="password" id="password" placeholder="รหัสผ่าน" required><br>
+    <button type="submit">สมัครสมาชิก</button>
+  </form>
+  <p id="registerResult"></p>
+
+  <hr>
+
+  <h2>สินค้า</h2>
+  <div id="productList"></div>
+
+  <script>
+    const API = 'http://localhost:3000';
+
+    // ✅ ตรวจสอบว่ามี token ใน localStorage แล้วหรือยัง
+    function checkRegistration() {
+      const token = localStorage.getItem('token');
+      const memberId = localStorage.getItem('memberId');
+      const form = document.getElementById('registerForm');
+      const result = document.getElementById('registerResult');
+
+      if (token && memberId) {
+        form.style.display = 'none';
+        result.innerHTML = `👋 ยินดีต้อนรับกลับ!<br>คุณสามารถสั่งซื้อสินค้าได้เลย`;
+        result.style.color = 'green';
+      } else {
+        form.style.display = 'block';
+        result.innerHTML = '';
+      }
+    }
+
+    // ✅ สมัครสมาชิก
+    document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('name').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    const result = document.getElementById('registerResult');
+    result.innerHTML = ''; // เคลียร์ข้อความก่อนหน้า (แต่ไม่ลบหลังจาก timeout)
+
+    try {
+      const res = await fetch(`${API}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        result.innerHTML = `❌ ${data.error || 'เกิดข้อผิดพลาดในการสมัครสมาชิก'}`;
+        result.style.color = 'red';
+        return;
+      }
+
+      if (data.token) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('memberId', data.memberId);
+
+        result.innerHTML = `✅ สมัครสมาชิกสำเร็จ!<br>Token ถูกเก็บไว้เรียบร้อย สามารถสั่งซื้อได้แล้ว`;
+        result.style.color = 'green';
+
+        loadProducts(); // โหลดรายการสินค้าอีกครั้ง
+      } else {
+        result.innerHTML = '❌ ไม่ได้รับ token จากเซิร์ฟเวอร์';
+        result.style.color = 'red';
+      }
+    } catch (err) {
+      result.innerHTML = `❌ ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์: ${err.message}`;
+      result.style.color = 'red';
+    }
+  });
+
+
+    // ✅ โหลดสินค้า
+    async function loadProducts() {
+      const res = await fetch(`${API}/products`);
+      const products = await res.json();
+      const container = document.getElementById('productList');
+      container.innerHTML = '';
+
+      products.forEach(p => {
+        const div = document.createElement('div');
+        div.innerHTML = `
+          <h3>${p.name}</h3>
+          <p>ราคา: ${p.price} บาท</p>
+          <p>สถานะ: ${p.available ? 'พร้อมจำหน่าย' : 'หมด'}</p>
+          ${p.available ? `
+            <button onclick="showOrderForm(${p.id})">สั่งซื้อ</button>
+            <div id="orderForm-${p.id}" style="display:none; margin-top:10px;">
+              <input type="number" placeholder="จำนวน" id="qty-${p.id}" min="1" value="1">
+              <input type="text" placeholder="ที่อยู่จัดส่ง" id="addr-${p.id}">
+              <button onclick="placeOrder(${p.id})">ยืนยันสั่งซื้อ</button>
+            </div>
+          ` : ''}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function showOrderForm(productId) {
+      document.getElementById(`orderForm-${productId}`).style.display = 'block';
+    }
+
+    // ✅ สั่งซื้อสินค้า
+    async function placeOrder(productId) {
+      const quantity = parseInt(document.getElementById(`qty-${productId}`).value);
+      const address = document.getElementById(`addr-${productId}`).value;
+      const token = localStorage.getItem('token');
+      const memberId = localStorage.getItem('memberId');
+
+      if (!token || !memberId) {
+        alert('กรุณาสมัครสมาชิกก่อน');
+        return;
+      }
+
+      const res = await fetch(`${API}/preorder`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ memberId: parseInt(memberId), token, productId, quantity, address })
+      });
+
+      const data = await res.json();
+      alert(data.message || data.error);
+    }
+
+    // ✅ เริ่มต้น
+    checkRegistration();
+    loadProducts();
+  </script>
+</body>
+</html>

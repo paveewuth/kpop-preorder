@@ -1,0 +1,14 @@
+[
+  {
+    "id": 101,
+    "name": "BLACKPINK - 2025 SPECIAL ALBUM",
+    "price": 950,
+    "available": true
+  },
+  {
+    "id": 102,
+    "name": "SEVENTEEN - 12th Mini Album",
+    "price": 870,
+    "available": false
+  }
+]
